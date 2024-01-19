@@ -2,7 +2,7 @@
 ## デモサイト
 https://shi-works.github.io/noto-east-terrain-rgb-yourself-relief-map-on-mapbox-gl-js/
 
-![image](https://github.com/shi-works/noto-east-terrain-rgb-yourself-relief-map-on-mapbox-gl-js/assets/71203808/81a852e0-6ad8-4a3b-8cc3-2774e06aa484)
+https://github.com/shi-works/noto-east-terrain-rgb-yourself-relief-map-on-mapbox-gl-js/assets/71203808/d4ef1eb1-255c-4c71-aab5-135e8a4ec0c0
 
 - 令和6年能登半島地震（能登東部発災前DEM）（Terrain-RGB形式）
     - 出典：https://mapdata.qchizu.xyz/95disaster/202401noto_05/{z}/{x}/{y}.png
