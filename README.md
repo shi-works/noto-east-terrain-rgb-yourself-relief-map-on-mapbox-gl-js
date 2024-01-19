@@ -1,4 +1,4 @@
-# 能登東部発災前DEM（Terrain-RGB形式）をMapbox GL JS v3で表示するデモサイト
+# 能登東部発災前DEM（Terrain-RGB形式）をMapbox GL JS v3で「自分で作る色別標高図」風に表示するデモサイト
 ## デモサイト
 https://shi-works.github.io/noto-east-terrain-rgb-yourself-relief-map-on-mapbox-gl-js/
 
