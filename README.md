@@ -2,6 +2,8 @@
 ## デモサイト
 https://shi-works.github.io/noto-east-terrain-rgb-yourself-relief-map-on-mapbox-gl-js/
 
+![image](https://github.com/shi-works/noto-east-terrain-rgb-yourself-relief-map-on-mapbox-gl-js/assets/71203808/81a852e0-6ad8-4a3b-8cc3-2774e06aa484)
+
 - 令和6年能登半島地震（能登東部発災前DEM）（Terrain-RGB形式）
     - 出典：https://mapdata.qchizu.xyz/95disaster/202401noto_05/{z}/{x}/{y}.png
         - 原初データ①出典：[令和6年能登半島地震　能登東部３次元点群データ（発災前）【石川県】](https://www.geospatial.jp/ckan/dataset/2024-notoeast-pc)
