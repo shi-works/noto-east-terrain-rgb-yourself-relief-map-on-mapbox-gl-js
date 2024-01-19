@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>自分で作る色別標高図（地理院 標高タイル）</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+  <script>
+    // Mapbox accessToken
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hpd29ya3MiLCJhIjoiY2szeHZjeXJsMDJzdDNsbXczdnN1b3hpNiJ9.VQg_5pGbF1qU_6FZ33Uf4g';
+
+    // マップの初期化
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: 'https://tile.openstreetmap.jp/styles/maptiler-basic-ja/style.json',
+      center: { lat: 37.42207, lng: 137.19965 },
+      zoom: 15.05,
+      bearing: -48.1,
+      pitch: 62,
+      language: 'ja',
+      hash: true,
+      attributionControl: false
+    });
+
+    // ズーム・回転
+    map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+    // フルスクリーンモードのオンオフ
+    map.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+
+    // 現在位置表示
+    map.addControl(new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: false
+      },
+      fitBoundsOptions: { maxZoom: 18 },
+      trackUserLocation: true,
+      showUserLocation: true
+    }), 'top-left');
+
+    // スケール表示
+    map.addControl(new mapboxgl.ScaleControl({
+      maxWidth: 200,
+      unit: 'metric'
+    }));
+
+    // Attributionを折りたたみ表示
+    map.addControl(new mapboxgl.AttributionControl({
+      compact: true,
+      customAttribution: '（<a href="https://twitter.com/shi__works" target="_blank">Twitter</a> | <a href="https://github.com/shi-works/gsi-dem-yourself-relief-map-on-mapbox-gl-js" target="_blank">Github</a>） '
+    }));
+
+    // 地図がロードされたら実行
+    map.on('load', () => {
+      // 標高タイルDEMソース
+      map.addSource('noto-east-terrain-rgb-dem', {
+        "type": "raster-dem",
+        "minzoom": 2,
+        "maxzoom": 17,
+        "tiles": ["https://mapdata.qchizu.xyz/95disaster/202401noto_05/{z}/{x}/{y}.png"],
+        "tileSize": 256,
+        "attribution": "<a href='https://www.geospatial.jp/ckan/dataset/aac-disaster-20240101-dem' target='_blank'>令和6年能登半島地震（能登東部発災前DEM）を加工して作成</a>"
+      })
+
+      // 標高タイルDEMセット
+      map.setTerrain({ 'source': 'noto-east-terrain-rgb-dem', 'exaggeration': 1 });
+
+      // 標高タイルラスターソース
+      map.addSource('noto-east-terrain-rgb-raster', {
+        "type": "raster",
+        "minzoom": 1,
+        "maxzoom": 18,
+        "tiles": ["https://mapdata.qchizu.xyz/95disaster/202401noto_05/{z}/{x}/{y}.png"],
+        "tileSize": 256,
+        "attribution": "<a href='https://www.geospatial.jp/ckan/dataset/aac-disaster-20240101-dem target='_blank'>令和6年能登半島地震（能登東部発災前DEM）を加工して作成</a>"
+      })
+
+      // 標高カラーを定義
+      var colors = {
+        "-0": '#7B77D8',
+        "1": '#72D3FE',
+        "5": '#72FED9',
+        "10": '#74FF8A',
+        "25": '#AAFE72',
+        "50": '#F9FF74',
+        "100": '#FDB271',
+        "200": '#FF7380',
+        "300": '#FE72D2',
+        "300-": '#F274FC'
+      };
+
+      // 標高分解能
+      const u = 0.1
+
+      // 標高タイルラスターレイヤ
+      map.addLayer({
+        id: 'noto-east-terrain-rgb-raster',
+        source: 'noto-east-terrain-rgb-raster',
+        type: 'raster',
+        paint: {
+          'raster-color': [
+            'interpolate',
+            ['linear'],
+            ['raster-value'],
+            0, colors['-0'],
+            1, colors['1'],
+            5, colors['5'],
+            10, colors['10'],
+            25, colors['25'],
+            50, colors['50'],
+            100, colors['100'],
+            200, colors['200'],
+            300, colors['300'],
+            4000, colors['300-']
+          ],
+          'raster-color-mix': [
+            2 ** 16 * 255 * u,
+            2 ** 8 * 255 * u,
+            255 * u,
+            -10000
+          ],
+          'raster-color-range': [0, 650],
+          'raster-opacity': 0.8,
+          'raster-resampling': 'nearest'
+        }
+      })
+
+      // GUIに標高レンジの色設定用コントローラを追加
+      var gui = new dat.GUI();
+      gui.addColor(colors, '-0').onChange(setReliefColors);
+      gui.addColor(colors, '1').onChange(setReliefColors);
+      gui.addColor(colors, '5').onChange(setReliefColors);
+      gui.addColor(colors, '10').onChange(setReliefColors);
+      gui.addColor(colors, '25').onChange(setReliefColors);
+      gui.addColor(colors, '50').onChange(setReliefColors);
+      gui.addColor(colors, '100').onChange(setReliefColors);
+      gui.addColor(colors, '200').onChange(setReliefColors);
+      gui.addColor(colors, '300').onChange(setReliefColors);
+      gui.addColor(colors, '300-').onChange(setReliefColors);
+
+      // 標高レンジに基づいて色を設定する関数
+      function setReliefColors() {
+        map.setPaintProperty('noto-east-terrain-rgb-raster', 'raster-color', [
+          'interpolate',
+          ['linear'],
+          ['raster-value'],
+          0, colors['-0'],
+          1, colors['1'],
+          5, colors['5'],
+          10, colors['10'],
+          25, colors['25'],
+          50, colors['50'],
+          100, colors['100'],
+          200, colors['200'],
+          300, colors['300'],
+          4000, colors['300-']
+        ]);
+      }
+
+      // 陰影起伏図レイヤ
+      map.addLayer({
+        id: "hillshade",
+        type: "hillshade",
+        source: "noto-east-terrain-rgb-dem",
+        paint: {
+          // 陰影の強調度
+          "hillshade-exaggeration": 0.8,
+          // 陰影の色を濃くして、コントラストを高める
+          "hillshade-shadow-color": "rgba(0, 0, 0, 0.5)", // 影をより濃い色に
+          "hillshade-highlight-color": "rgba(255, 255, 255, 0.1)", // 照明された部分を明るく
+          // 光源の方向（0-359度で指定）
+          "hillshade-illumination-direction": 315,
+          // 光の当たる角度を調整して、影の鋭さを制御
+          "hillshade-illumination-angle": 45,
+          // 陰影レイヤーの透明度を調整
+          "hillshade-opacity": 0.9
+        }
+      });
+
+      // 地理院ベクトルタイル 自然地名ソース
+      map.addSource("gsi-shizen", {
+        type: 'vector',
+        tiles: [
+          "https://optgeo.github.io/shizen/zxy/{z}/{x}/{y}.pbf"
+        ],
+        attribution: '<a href="https://github.com/gsi-cyberjapan/experimental_pni/" target="_blank">国土地理院ベクトルタイル提供実験（自然地名）</a>',
+      });
+
+      // 地理院ベクトルタイル 自然地名レイヤ
+      map.addLayer({
+        "id": "NNFPt",
+        "layout": {
+          "text-field": [
+            "step",
+            [
+              "zoom"
+            ],
+            [
+              "get",
+              "name"
+            ],
+            14,
+            [
+              "concat",
+              [
+                "get",
+                "name"
+              ],
+              "（",
+              [
+                "get",
+                "type"
+              ],
+              "）"
+            ],
+            15,
+            [
+              "concat",
+              [
+                "get",
+                "name"
+              ],
+              "（",
+              [
+                "get",
+                "kana"
+              ],
+              "：",
+              [
+                "get",
+                "type"
+              ],
+              "）"
+            ],
+            16,
+            [
+              "concat",
+              [
+                "get",
+                "name"
+              ],
+              "（",
+              [
+                "get",
+                "kana"
+              ],
+              "／",
+              [
+                "get",
+                "rj"
+              ],
+              "：",
+              [
+                "get",
+                "type"
+              ],
+              "）"
+            ]
+          ],
+          "text-size": [
+            "interpolate",
+            [
+              "linear"
+            ],
+            [
+              "zoom"
+            ],
+            11,
+            7,
+            14,
+            20
+          ]
+        },
+        "paint": {
+          "text-color": [
+            "match",
+            [
+              "get",
+              "type"
+            ],
+            [
+              "河川",
+              "湖沼",
+              "滝",
+              "海岸・浜・磯",
+              "湾・灘",
+              "海峡・水道"
+            ],
+            [
+              "rgb",
+              45,
+              91,
+              246
+            ],
+            [
+              "山"
+            ],
+            [
+              "rgb",
+              146,
+              114,
+              39
+            ],
+            [
+              "rgb",
+              0,
+              0,
+              0
+            ]
+          ],
+          "text-halo-color": [
+            "match",
+            [
+              "get",
+              "gaijiFlg"
+            ],
+            1,
+            [
+              "rgb",
+              255,
+              255,
+              0
+            ],
+            [
+              "rgb",
+              255,
+              255,
+              255
+            ]
+          ],
+          "text-halo-width": 2
+        },
+        "source": "gsi-shizen",
+        "source-layer": "NNFPt",
+        "type": "symbol"
+      });
+
+    })
+
+  </script>
+
+</body>
+
+</html>
