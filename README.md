@@ -1,4 +1,5 @@
 # 能登東部発災前DEM（Terrain-RGB形式）をMapbox GL JS v3で表示するデモサイト
+## デモサイト
 https://shi-works.github.io/noto-east-terrain-rgb-yourself-relief-map-on-mapbox-gl-js/
 
 - 令和6年能登半島地震（能登東部発災前DEM）（Terrain-RGB形式）
